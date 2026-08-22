@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "room-to-mind",
+      "runtimeExecutable": "C:\\Users\\Ramesh\\room-to-mind\\start-room-to-mind.cmd",
+      "runtimeArgs": [],
+      "port": 5220
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# Render blueprint — spec §3.2 pins deployment to Render (Node runtime).
+services:
+  - type: web
+    name: room-to-mind
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: room-to-mind-db
+          property: connectionString
+      - key: NODE_VERSION
+        value: 20.11.1
+
+databases:
+  - name: room-to-mind-db
+    plan: free

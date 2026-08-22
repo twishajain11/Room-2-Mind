@@ -1,0 +1,47 @@
+// Room to Mind — feature vectors only.
+// There is no image column, no audio column, and no file storage anywhere in
+// this schema. That absence is deliberate (spec §4) and is stated in the README.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  handle    String     @unique // no email, no auth, no PII
+  createdAt DateTime   @default(now())
+  snapshots Snapshot[]
+  sessions  Session[]
+}
+
+model Snapshot {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  mode      String // "standard" | "recovery"
+  features  Json // raw feature values, numbers only
+  subscores Json // 0 to 100 per factor
+  eli       Float
+  hasAudio  Boolean
+  sessions  Session[]
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  userId        String
+  snapshotId    String
+  user          User     @relation(fields: [userId], references: [id])
+  snapshot      Snapshot @relation(fields: [snapshotId], references: [id])
+  startedAt     DateTime
+  durationMin   Int
+  concentration Int // 1 to 7
+  stress        Int // 1 to 7
+  energy        Int // 1 to 7
+  note          String?  @db.VarChar(280)
+}

@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * A tool that measures visual load should not add to it. One paper ground, one
+ * ink, one muted tone, one accent. Nothing else earns a colour.
+ */
+:root {
+  --paper: #faf9f6;
+  --card: #ffffff;
+  --ink: #1b1b19;
+  --muted: #6d6b64;
+  --rule: #e4e2db;
+  --accent: #2f5d57;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131311;
+    --card: #1b1b19;
+    --ink: #eceae3;
+    --muted: #9b9890;
+    --rule: #2e2e2a;
+    --accent: #7fb3aa;
+  }
+}
+
+body {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
