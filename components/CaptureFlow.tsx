@@ -1,16 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { sampleRoomAudio, type SampleHandle } from "@/lib/audio/record";
+import { SAMPLE_SECONDS } from "@/lib/audio/spectral";
+import type { AudioFeatures } from "@/lib/audio/types";
 import { discardMedia, toWorkingPixels, WORKING_EDGE } from "@/lib/vision/capture";
 import { detect } from "@/lib/vision/detector";
 import { extractVisionFeatures } from "@/lib/vision/extract";
-import { DETECTION_CONFIDENCE_THRESHOLD } from "@/lib/vision/objects";
 import type { Detection, VisionFeatures } from "@/lib/vision/types";
-import FeatureTable from "./FeatureTable";
+import { newSnapshotId, saveSnapshot } from "@/lib/snapshotStore";
 
-type Stage = "idle" | "camera" | "working" | "done";
+type Stage = "idle" | "camera" | "working" | "sound" | "listening";
 
-interface Result {
+interface VisionResult {
   features: VisionFeatures;
   detections: Detection[];
   frame: { width: number; height: number };
@@ -18,14 +21,18 @@ interface Result {
 }
 
 export default function CaptureFlow() {
+  const router = useRouter();
+
   const [stage, setStage] = useState<Stage>("idle");
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<Result | null>(null);
+  const [vision, setVision] = useState<VisionResult | null>(null);
+  const [progress, setProgress] = useState({ fraction: 0, rms: 0 });
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const sampleRef = useRef<SampleHandle | null>(null);
 
   const releaseEverything = useCallback(() => {
     discardMedia({ stream: streamRef.current, objectUrl: objectUrlRef.current });
@@ -35,7 +42,13 @@ export default function CaptureFlow() {
   }, []);
 
   // Nothing raw is allowed to outlive the page.
-  useEffect(() => releaseEverything, [releaseEverything]);
+  useEffect(
+    () => () => {
+      releaseEverything();
+      sampleRef.current?.cancel();
+    },
+    [releaseEverything]
+  );
 
   const startCamera = useCallback(async () => {
     setError(null);
@@ -79,13 +92,13 @@ export default function CaptureFlow() {
         // Features exist, so the pixels have no reason to.
         releaseEverything();
 
-        setResult({
+        setVision({
           features,
           detections,
           frame: { width: px.width, height: px.height },
           elapsedMs: performance.now() - startedAt,
         });
-        setStage("done");
+        setStage("sound");
       } catch (e) {
         releaseEverything();
         setStage("idle");
@@ -112,9 +125,48 @@ export default function CaptureFlow() {
     [releaseEverything, runExtraction]
   );
 
+  /** Write the snapshot for this tab and hand off to the result page. */
+  const finish = useCallback(
+    (audio: AudioFeatures | null) => {
+      if (!vision) return;
+      const id = newSnapshotId();
+      saveSnapshot({
+        id,
+        createdAt: new Date().toISOString(),
+        vision: vision.features,
+        audio,
+        detections: vision.detections,
+        frame: vision.frame,
+        elapsedMs: vision.elapsedMs,
+      });
+      router.push("/result/" + id);
+    },
+    [router, vision]
+  );
+
+  const listen = useCallback(async () => {
+    setError(null);
+    setProgress({ fraction: 0, rms: 0 });
+    try {
+      const handle = await sampleRoomAudio((p) => setProgress(p));
+      sampleRef.current = handle;
+      setStage("listening");
+      const features = await handle.done;
+      sampleRef.current = null;
+      finish(features);
+    } catch {
+      setStage("sound");
+      setError(
+        "The microphone could not be opened. You can continue without sound, and acoustic load will be left out of the score rather than guessed at."
+      );
+    }
+  }, [finish]);
+
   const reset = useCallback(() => {
     releaseEverything();
-    setResult(null);
+    sampleRef.current?.cancel();
+    sampleRef.current = null;
+    setVision(null);
     setStage("idle");
   }, [releaseEverything]);
 
@@ -191,77 +243,69 @@ export default function CaptureFlow() {
         </p>
       )}
 
-      {stage === "done" && result && (
-        <div className="space-y-10">
-          <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-rule pb-4">
-            <p className="text-sm text-muted">
-              <span className="numeric text-ink">{result.frame.width}</span> ×{" "}
-              <span className="numeric text-ink">{result.frame.height}</span> working frame,{" "}
-              <span className="numeric text-ink">{result.detections.length}</span> raw detections,
-              read in <span className="numeric text-ink">{Math.round(result.elapsedMs)}</span> ms
-            </p>
-            <button
-              onClick={reset}
-              className="rounded-md border border-rule px-4 py-2 text-sm transition-colors hover:border-ink"
-            >
-              New snapshot
-            </button>
+      {stage === "sound" && vision && (
+        <div className="max-w-reading space-y-5">
+          <div className="numeric border-b border-rule pb-4 text-sm text-muted">
+            <span className="text-ink">{vision.frame.width}</span> ×{" "}
+            <span className="text-ink">{vision.frame.height}</span> working frame,{" "}
+            <span className="text-ink">{vision.detections.length}</span> raw detections, read in{" "}
+            <span className="text-ink">{Math.round(vision.elapsedMs)}</span> ms
           </div>
 
-          <FeatureTable features={result.features} />
-
-          <DetectionList detections={result.detections} />
-
-          <section className="space-y-3">
-            <h3 className="text-xs uppercase tracking-[0.18em] text-muted">Raw feature vector</h3>
-            <p className="max-w-reading text-xs text-muted">
-              This is the whole of what a snapshot is: numbers and labels. There is no image field
-              here because no image was kept.
+          <div className="space-y-2">
+            <h2 className="text-sm font-medium">Add the sound channel</h2>
+            <p className="text-sm leading-relaxed text-muted">
+              {SAMPLE_SECONDS} seconds of listening, reduced to five numbers as it goes. Nothing is
+              recorded: there is no audio buffer to keep and no file to send. Skip it and acoustic
+              load is left out of the score entirely rather than guessed at.
             </p>
-            <pre className="overflow-x-auto rounded-md border border-rule bg-card p-4 font-mono text-xs leading-relaxed">
-              {JSON.stringify(result.features, null, 2)}
-            </pre>
-          </section>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={listen}
+              className="rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-paper transition-opacity hover:opacity-90"
+            >
+              Listen for {SAMPLE_SECONDS} seconds
+            </button>
+            <button
+              onClick={() => finish(null)}
+              className="rounded-md border border-rule px-5 py-2.5 text-sm font-medium transition-colors hover:border-ink"
+            >
+              Skip sound, see the score
+            </button>
+          </div>
+        </div>
+      )}
+
+      {stage === "listening" && (
+        <div className="max-w-reading space-y-4">
+          <p className="text-sm text-muted">
+            Listening. Carry on as normal, the point is what the room actually sounds like.
+          </p>
+
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-rule">
+            <div
+              className="h-full rounded-full bg-accent"
+              style={{ width: `${Math.round(progress.fraction * 100)}%` }}
+            />
+          </div>
+
+          <div className="numeric flex items-baseline justify-between text-xs text-muted">
+            <span>
+              {Math.round(progress.fraction * SAMPLE_SECONDS)} of {SAMPLE_SECONDS} seconds
+            </span>
+            <span>current loudness {progress.rms.toFixed(4)}</span>
+          </div>
+
+          <button
+            onClick={() => sampleRef.current?.cancel()}
+            className="text-xs text-muted underline underline-offset-4 hover:text-ink"
+          >
+            Stop early and score what was heard
+          </button>
         </div>
       )}
     </div>
-  );
-}
-
-function DetectionList({ detections }: { detections: Detection[] }) {
-  if (detections.length === 0) {
-    return (
-      <section className="space-y-2">
-        <h3 className="text-xs uppercase tracking-[0.18em] text-muted">Detections</h3>
-        <p className="text-sm text-muted">Nothing was detected in this frame.</p>
-      </section>
-    );
-  }
-
-  return (
-    <section className="space-y-3">
-      <h3 className="text-xs uppercase tracking-[0.18em] text-muted">Detections</h3>
-      <p className="max-w-reading text-xs text-muted">
-        Everything COCO-SSD returned. Rows below confidence{" "}
-        {DETECTION_CONFIDENCE_THRESHOLD.toFixed(2)} are shown for transparency but take no part in
-        any feature.
-      </p>
-      <ul className="divide-y divide-rule border-y border-rule">
-        {[...detections]
-          .sort((a, b) => b.score - a.score)
-          .map((d, i) => (
-            <li
-              key={d.class + "-" + i}
-              className={
-                "flex items-baseline justify-between py-2 text-sm " +
-                (d.score >= DETECTION_CONFIDENCE_THRESHOLD ? "" : "text-muted line-through")
-              }
-            >
-              <span>{d.class}</span>
-              <span className="numeric">{d.score.toFixed(3)}</span>
-            </li>
-          ))}
-      </ul>
-    </section>
   );
 }
