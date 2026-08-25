@@ -97,6 +97,64 @@ export function lighting(v: VisionFeatures): number {
 }
 
 /**
+ * Which of lighting's three conditions actually drove the score.
+ *
+ * "Too dim, too harsh, or an extreme contrast range" is three different rooms
+ * with three different fixes, and reporting the disjunction tells the reader
+ * nothing. This names the one that dominated and quotes the number behind it.
+ */
+export function lightingDiagnosis(v: VisionFeatures): { driver: string; sentence: string } {
+  const parts = [
+    { driver: "level", weighted: 0.5 * lerp(v.meanLuminance, BREAKPOINTS.luminanceLoad) },
+    { driver: "contrast", weighted: 0.3 * lerp(v.luminanceStdDev, BREAKPOINTS.contrastLoad) },
+    { driver: "glare", weighted: 0.2 * lerp(v.brightRegionRatio, BREAKPOINTS.glareLoad) },
+  ].sort((a, b) => b.weighted - a.weighted);
+
+  const top = parts[0];
+
+  if (top.weighted <= 0) {
+    return {
+      driver: "none",
+      sentence: `Light level, contrast spread, and bright-area share are all inside the comfortable band, at ${v.meanLuminance.toFixed(
+        0
+      )} of 255 mean brightness.`,
+    };
+  }
+
+  if (top.driver === "level") {
+    return v.meanLuminance < 110
+      ? {
+          driver: "dim",
+          sentence: `The room is dim: mean brightness ${v.meanLuminance.toFixed(
+            0
+          )} of 255, where the comfortable band starts around 110.`,
+        }
+      : {
+          driver: "blown",
+          sentence: `The room is very bright overall: mean brightness ${v.meanLuminance.toFixed(
+            0
+          )} of 255, where the comfortable band ends around 170.`,
+        };
+  }
+
+  if (top.driver === "contrast") {
+    return {
+      driver: "contrast",
+      sentence: `The contrast range is wide: brightness varies by ${v.luminanceStdDev.toFixed(
+        0
+      )} across the frame, so your eyes are adapting between bright and dark areas.`,
+    };
+  }
+
+  return {
+    driver: "glare",
+    sentence: `A bright source dominates: ${(v.brightRegionRatio * 100).toFixed(
+      1
+    )}% of the frame is at or near full brightness.`,
+  };
+}
+
+/**
  * Work and rest occupying the same physical zone.
  *
  * Stepped rather than interpolated because the underlying question is

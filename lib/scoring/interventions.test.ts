@@ -87,7 +87,7 @@ describe("intervention copy", () => {
     for (const r of rankInterventions(subs(), STANDARD_WEIGHTS, v)) {
       // Every action names something to move, clear, add, or rotate.
       expect(r.action.length).toBeGreaterThan(40);
-      expect(/clear|move|rotate|add|diffuse|replace|reduce|give/i.test(r.action)).toBe(true);
+      expect(/clear|move|rotate|add|diffuse|replace|reduce|give|even out|put/i.test(r.action)).toBe(true);
     }
   });
 

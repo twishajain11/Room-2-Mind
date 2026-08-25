@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { computeEli, eliBand } from "@/lib/scoring/eli";
-import { computeSubscores } from "@/lib/scoring/features";
+import { computeSubscores, lightingDiagnosis } from "@/lib/scoring/features";
 import { PERCENTILES_ARE_PROVISIONAL, topInterventions } from "@/lib/scoring/interventions";
 import {
   CALIBRATION_DATE,
@@ -170,7 +170,11 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
                 <p className="text-xs leading-relaxed text-muted">
                   {subscore === null
                     ? SKIP_REASON[factor] ?? "Not scored in this snapshot."
-                    : FACTOR_MEANING[factor]}
+                    : factor === "lighting"
+                      ? // Naming which of the three conditions fired, rather than
+                        // reciting all three and telling the reader nothing.
+                        lightingDiagnosis(snapshot.vision).sentence
+                      : FACTOR_MEANING[factor]}
                 </p>
               </li>
             );

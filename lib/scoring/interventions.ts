@@ -1,6 +1,7 @@
 import type { AudioFeatures } from "@/lib/audio/types";
 import type { VisionFeatures } from "@/lib/vision/types";
 import { computeEli } from "./eli";
+import { lightingDiagnosis } from "./features";
 import { FACTOR_LABELS, type FactorKey, type FactorWeights, type Subscores } from "./weights";
 
 /**
@@ -81,15 +82,14 @@ function copyFor(
       };
 
     case "lighting": {
-      const dim = v.meanLuminance < 110;
-      return {
-        action: dim
+      const { driver, sentence } = lightingDiagnosis(v);
+      const action =
+        driver === "dim"
           ? "Add a second light source at desk height on the side away from your window, so the room is lit rather than the screen being the brightest thing in it."
-          : "Diffuse the strongest light in the room: close a blind partway, or bounce the lamp off the ceiling instead of pointing it at the desk.",
-        evidence: `Mean luminance is ${v.meanLuminance.toFixed(0)} of 255 with a spread of ${v.luminanceStdDev.toFixed(
-          0
-        )}, and ${(v.brightRegionRatio * 100).toFixed(1)}% of the frame is at or near full brightness.`,
-      };
+          : driver === "contrast"
+            ? "Even out the range: put a low lamp in the darkest corner of the frame rather than making the bright part brighter, so your eyes stop adapting back and forth."
+            : "Diffuse the strongest light in the room: close a blind partway, or bounce the lamp off the ceiling instead of pointing it at the desk.";
+      return { action, evidence: sentence };
     }
 
     case "workspaceSeparation":
