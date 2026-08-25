@@ -6,7 +6,7 @@ import { sampleRoomAudio, type SampleHandle } from "@/lib/audio/record";
 import { SAMPLE_SECONDS } from "@/lib/audio/spectral";
 import type { AudioFeatures } from "@/lib/audio/types";
 import { discardMedia, toWorkingPixels, WORKING_EDGE } from "@/lib/vision/capture";
-import { detect } from "@/lib/vision/detector";
+import { detect, loadDetector } from "@/lib/vision/detector";
 import { extractVisionFeatures } from "@/lib/vision/extract";
 import type { Detection, VisionFeatures } from "@/lib/vision/types";
 import { newSnapshotId, saveSnapshot } from "@/lib/snapshotStore";
@@ -28,6 +28,7 @@ export default function CaptureFlow() {
   const [error, setError] = useState<string | null>(null);
   const [vision, setVision] = useState<VisionResult | null>(null);
   const [progress, setProgress] = useState({ fraction: 0, rms: 0 });
+  const [modelReady, setModelReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -49,6 +50,27 @@ export default function CaptureFlow() {
     },
     [releaseEverything]
   );
+
+  /**
+   * Start fetching the detector the moment this page opens.
+   *
+   * The weights are a ~30 second download on a cold cache, and the user spends
+   * that long choosing a photo or framing a shot anyway. Waiting until they
+   * press Capture spends their attention on a wait that could have happened
+   * while they were busy.
+   */
+  useEffect(() => {
+    let alive = true;
+    loadDetector()
+      .then(() => alive && setModelReady(true))
+      .catch(() => {
+        // Not fatal: the capture path awaits the same promise and surfaces the
+        // real error there.
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const startCamera = useCallback(async () => {
     setError(null);
@@ -179,6 +201,13 @@ export default function CaptureFlow() {
           {WORKING_EDGE}px, read for features, and then dropped. No image data is sent anywhere, and
           the photo is never shown back to you because it no longer exists once the numbers do.
         </p>
+        {stage === "idle" && (
+          <p className="text-xs text-muted">
+            {modelReady
+              ? "Object model ready."
+              : "Fetching the object model in the background, about 30 seconds on a first visit. You can pick a photo now; it will wait for the model rather than the other way round."}
+          </p>
+        )}
       </header>
 
       {error && (
