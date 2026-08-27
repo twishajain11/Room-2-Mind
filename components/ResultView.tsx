@@ -21,9 +21,11 @@ import type { SnapshotPayload } from "@/lib/snapshotStore";
 import { storedPayload } from "@/lib/snapshotStore";
 import { DETECTION_CONFIDENCE_THRESHOLD } from "@/lib/vision/objects";
 import { savePending } from "@/lib/loopStore";
+import { applyTheme } from "@/lib/theme";
 import { priorLabel } from "@/lib/personalization/priors";
 import FeatureTable from "./FeatureTable";
 import LoopCloser from "./LoopCloser";
+import ScoreDial from "./ScoreDial";
 import SimulationPanel, { type ConcentrationModel } from "./SimulationPanel";
 import WeightsPanel from "./WeightsPanel";
 
@@ -84,7 +86,13 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
   const switchMode = (next: ScoringMode) => {
     setMode(next);
     setWeights(WEIGHTS_BY_MODE[next]);
+    // A mode that reweights toward light sensitivity should not keep shining a
+    // white page at the person who turned it on.
+    applyTheme(next === "recovery" ? "recovery" : "default");
   };
+
+  // Leaving the page should not leave the palette behind.
+  useEffect(() => () => applyTheme("default"), []);
 
   return (
     <div className="space-y-14">
@@ -99,15 +107,11 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
 
       {/* The score, and one click to its arithmetic. */}
       <section className="space-y-5">
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-          <p className="numeric text-6xl font-light leading-none">{result.eli.toFixed(0)}</p>
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{eliBand(result.eli)}</p>
-            <p className="text-xs text-muted">
-              Environmental Load Index, 0 to 100. Higher means more load.
-            </p>
-          </div>
-        </div>
+        <ScoreDial
+          value={result.eli}
+          label={eliBand(result.eli)}
+          skipped={result.skipped.length}
+        />
 
         <button
           onClick={() => setShowWeights((s) => !s)}
@@ -339,6 +343,26 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
             your snapshot; the target it aims at is not yet grounded in data.
           </p>
         )}
+      </section>
+
+      {/* When the room cannot be changed right now. */}
+      <section className="space-y-3 rounded-md border border-rule bg-card p-5">
+        <h2 className="display text-xl">Not right now?</h2>
+        <p className="max-w-reading text-sm leading-relaxed text-muted">
+          Some of this needs a free afternoon, a different desk, or somebody else&rsquo;s
+          permission. If the room has to stay as it is for the next hour, there is a small room of
+          traditional practices instead. Nothing there is measured or stored.
+        </p>
+        <Link
+          href={
+            result.terms.length > 0
+              ? `/practice?for=${result.terms[0].factor}`
+              : "/practice"
+          }
+          className="inline-block rounded-md border border-accent px-5 py-2.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-accent-ink"
+        >
+          Take a few minutes instead
+        </Link>
       </section>
 
       {/* The debug view. */}

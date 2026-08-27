@@ -8,9 +8,15 @@ const config: Config = {
         paper: "var(--paper)",
         card: "var(--card)",
         ink: "var(--ink)",
+        "ink-soft": "var(--ink-soft)",
         muted: "var(--muted)",
         rule: "var(--rule)",
         accent: "var(--accent)",
+        "accent-soft": "var(--accent-soft)",
+        "accent-ink": "var(--accent-ink)",
+      },
+      fontFamily: {
+        display: "var(--display)",
       },
       maxWidth: {
         reading: "34rem",
