@@ -26,6 +26,8 @@ import { priorLabel } from "@/lib/personalization/priors";
 import FeatureTable from "./FeatureTable";
 import LoopCloser from "./LoopCloser";
 import ScoreDial from "./ScoreDial";
+import RoomDiagram from "./RoomDiagram";
+import FactorRadar from "./FactorRadar";
 import SimulationPanel, { type ConcentrationModel } from "./SimulationPanel";
 import WeightsPanel from "./WeightsPanel";
 
@@ -113,6 +115,15 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
           skipped={result.skipped.length}
         />
 
+        <RoomDiagram
+          detections={snapshot.detections}
+          frame={snapshot.frame}
+          brightCentroid={snapshot.vision.brightRegionCentroid}
+          brightRatio={snapshot.vision.brightRegionRatio}
+          screenBox={snapshot.vision.screenBox}
+          screenLightAlignment={snapshot.vision.screenLightAlignment}
+        />
+
         <button
           onClick={() => setShowWeights((s) => !s)}
           className="text-sm text-accent underline underline-offset-4"
@@ -183,6 +194,11 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
       {/* Factor breakdown. */}
       <section className="space-y-4">
         <h2 className="text-sm font-medium">What made up the score</h2>
+
+        <div className="flex justify-center py-2">
+          <FactorRadar subscores={subscores} />
+        </div>
+
         <ul className="divide-y divide-rule border-y border-rule">
           {FACTORS.map((factor) => {
             const subscore = subscores[factor];
