@@ -62,6 +62,11 @@ export async function GET(request: Request) {
             }))
           : null,
         rSquared: populationFit ? Number(populationFit.rSquared.toFixed(3)) : null,
+        // The simulation panel needs the scale the coefficients were fitted on
+        // to turn a subscore move into a concentration move.
+        stdDevs: populationFit
+          ? Object.fromEntries(FACTORS.map((f, i) => [f, populationFit.stdDevs[i]]))
+          : null,
       },
     };
 

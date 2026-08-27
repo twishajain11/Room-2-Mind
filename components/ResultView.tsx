@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { computeEli, eliBand } from "@/lib/scoring/eli";
 import { computeSubscores, lightingDiagnosis } from "@/lib/scoring/features";
 import { PERCENTILES_ARE_PROVISIONAL, topInterventions } from "@/lib/scoring/interventions";
@@ -19,7 +20,11 @@ import {
 import type { SnapshotPayload } from "@/lib/snapshotStore";
 import { storedPayload } from "@/lib/snapshotStore";
 import { DETECTION_CONFIDENCE_THRESHOLD } from "@/lib/vision/objects";
+import { savePending } from "@/lib/loopStore";
+import { priorLabel } from "@/lib/personalization/priors";
 import FeatureTable from "./FeatureTable";
+import LoopCloser from "./LoopCloser";
+import SimulationPanel, { type ConcentrationModel } from "./SimulationPanel";
 import WeightsPanel from "./WeightsPanel";
 
 /** Why a factor could not be scored, in the words the reader needs. */
@@ -31,9 +36,38 @@ const SKIP_REASON: Partial<Record<FactorKey, string>> = {
 };
 
 export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) {
+  const router = useRouter();
   const [mode, setMode] = useState<ScoringMode>("standard");
   const [weights, setWeights] = useState<FactorWeights>(WEIGHTS_BY_MODE.standard);
   const [showWeights, setShowWeights] = useState(false);
+  const [model, setModel] = useState<ConcentrationModel | null>(null);
+
+  // The concentration model, if one has been fitted yet. Stays null on failure
+  // and at low sample sizes, which is what the simulation panel expects.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/insights")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!alive || !data?.population?.fitted || !data.population.drivers) return;
+        const coefficients: ConcentrationModel["coefficients"] = {};
+        const standardErrors: ConcentrationModel["standardErrors"] = {};
+        for (const d of data.population.drivers) {
+          coefficients[d.factor as FactorKey] = d.coefficient;
+          standardErrors[d.factor as FactorKey] = d.standardError;
+        }
+        setModel({
+          coefficients,
+          standardErrors,
+          stdDevs: data.population.stdDevs ?? {},
+          responses: data.population.responses,
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const subscores = useMemo(
     () => computeSubscores(snapshot.vision, snapshot.audio),
@@ -54,6 +88,15 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
 
   return (
     <div className="space-y-14">
+      {snapshot.compareWith && (
+        <LoopCloser
+          pending={snapshot.compareWith}
+          currentEli={result.eli}
+          currentSubscores={subscores}
+          currentFeatures={snapshot.vision}
+        />
+      )}
+
       {/* The score, and one click to its arithmetic. */}
       <section className="space-y-5">
         <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
@@ -153,7 +196,8 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
                         {subscore.toFixed(0)}
                         <span className="text-muted">
                           {" "}
-                          — {term ? term.contribution.toFixed(1) : "0.0"} of the {result.eli.toFixed(0)}
+                          — {term ? term.contribution.toFixed(1) : "0.0"} of the{" "}
+                          {result.eli.toFixed(1)}
                         </span>
                       </>
                     )}
@@ -187,6 +231,13 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
             fitted to the calibration dataset, and that is the next thing this project does.
           </p>
         )}
+      </section>
+
+      {/* Simulation. */}
+      <section className="space-y-4">
+        <h2 className="text-sm font-medium">Simulation</h2>
+        <SimulationPanel subscores={subscores} weights={weights} model={model} />
+        <p className="max-w-reading text-xs leading-relaxed text-muted">{priorLabel()}</p>
       </section>
 
       {/* The acoustic channel. */}
@@ -254,6 +305,28 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
                   worth {item.realizableDelta.toFixed(1)} ELI points before effort, ranked at{" "}
                   {item.score.toFixed(1)} after it.
                 </p>
+
+                {i === 0 && (
+                  <button
+                    onClick={() => {
+                      savePending({
+                        baselineId: snapshot.id,
+                        baselineEli: result.eli,
+                        baselineSubscores: subscores,
+                        baselineFeatures: snapshot.vision,
+                        factor: item.factor,
+                        factorLabel: FACTOR_LABELS[item.factor],
+                        action: item.action,
+                        predictedDelta: item.realizableDelta,
+                        createdAt: new Date().toISOString(),
+                      });
+                      router.push("/capture");
+                    }}
+                    className="mt-1 rounded-md border border-accent px-4 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-paper"
+                  >
+                    I have made this change, measure it again
+                  </button>
+                )}
               </li>
             ))}
           </ol>

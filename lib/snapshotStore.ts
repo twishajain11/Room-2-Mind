@@ -1,4 +1,5 @@
 import type { AudioFeatures } from "@/lib/audio/types";
+import type { PendingComparison } from "@/lib/loopStore";
 import type { Detection, VisionFeatures } from "@/lib/vision/types";
 
 /**
@@ -23,6 +24,8 @@ export interface SnapshotPayload {
   detections: Detection[];
   frame: { width: number; height: number };
   elapsedMs: number;
+  /** Set when this snapshot was taken to close a §8.3 loop on an earlier one. */
+  compareWith?: PendingComparison;
 }
 
 const PREFIX = "rtm:snapshot:";

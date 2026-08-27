@@ -10,6 +10,7 @@ import { detect, loadDetector } from "@/lib/vision/detector";
 import { extractVisionFeatures } from "@/lib/vision/extract";
 import type { Detection, VisionFeatures } from "@/lib/vision/types";
 import { newSnapshotId, saveSnapshot } from "@/lib/snapshotStore";
+import { clearPending, loadPending } from "@/lib/loopStore";
 
 type Stage = "idle" | "camera" | "working" | "sound" | "listening";
 
@@ -152,6 +153,11 @@ export default function CaptureFlow() {
     (audio: AudioFeatures | null) => {
       if (!vision) return;
       const id = newSnapshotId();
+
+      // If the user came here from an intervention, this snapshot closes that
+      // loop and carries the promise it is about to be measured against.
+      const pending = loadPending() ?? undefined;
+
       saveSnapshot({
         id,
         createdAt: new Date().toISOString(),
@@ -160,7 +166,9 @@ export default function CaptureFlow() {
         detections: vision.detections,
         frame: vision.frame,
         elapsedMs: vision.elapsedMs,
+        compareWith: pending,
       });
+      if (pending) clearPending();
       router.push("/result/" + id);
     },
     [router, vision]
