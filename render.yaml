@@ -1,4 +1,4 @@
-# Render blueprint. Spec §3.2 pins deployment to Render, Node runtime.
+# Render blueprint. Spec section 3.2 pins deployment to Render, Node runtime.
 #
 # The Postgres instance was deliberately held back until Week 3, because
 # Render's free database expires 30 days after it is created and nothing read
@@ -13,7 +13,11 @@ services:
     # Region defaults to Oregon. Singapore is far closer to India if the free
     # tier allows it, which matters for demo latency but not for correctness:
     # every model and every feature runs in the browser regardless.
-    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
+    #
+    # Migrations deliberately do NOT run in the build. See scripts/start.mjs:
+    # the site must still serve when the database is not wired up yet, because
+    # everything except storing a calibration response works without it.
+    buildCommand: npm ci && npx prisma generate && npm run build
     startCommand: npm run start
     healthCheckPath: /
     envVars:

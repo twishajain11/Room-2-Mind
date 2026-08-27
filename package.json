@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "next dev -p 5220",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/start.mjs",
     "lint": "next lint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "start:next": "next start"
   },
   "dependencies": {
     "@prisma/client": "6.16.2",
