@@ -1,13 +1,9 @@
 # Render blueprint. Spec §3.2 pins deployment to Render, Node runtime.
 #
-# The web service ships alone on purpose. Render's free Postgres instance
-# expires 30 days after it is created, and nothing in the app touches the
-# database until the Week 3 API routes exist, so creating it now would burn a
-# third of that window on an unused instance. The database block is written out
-# at the bottom of this file, commented, ready for Week 3.
-#
-# `npx prisma generate` runs fine with no DATABASE_URL set, so the build below
-# is complete as it stands.
+# The Postgres instance was deliberately held back until Week 3, because
+# Render's free database expires 30 days after it is created and nothing read
+# it until the collection instrument existed. It exists now, so the database
+# joins the blueprint here.
 
 services:
   - type: web
@@ -17,21 +13,17 @@ services:
     # Region defaults to Oregon. Singapore is far closer to India if the free
     # tier allows it, which matters for demo latency but not for correctness:
     # every model and every feature runs in the browser regardless.
-    buildCommand: npm ci && npx prisma generate && npm run build
+    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
     startCommand: npm run start
     healthCheckPath: /
     envVars:
       - key: NODE_VERSION
         value: 20.11.1
-# Week 3, when /api/snapshots lands, add to envVars above:
-#
-#       - key: DATABASE_URL
-#         fromDatabase:
-#           name: room-to-mind-db
-#           property: connectionString
-#
-# and uncomment:
-#
-# databases:
-#   - name: room-to-mind-db
-#     plan: free
+      - key: DATABASE_URL
+        fromDatabase:
+          name: room-to-mind-db
+          property: connectionString
+
+databases:
+  - name: room-to-mind-db
+    plan: free

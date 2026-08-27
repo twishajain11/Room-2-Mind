@@ -44,4 +44,18 @@ model Session {
   stress        Int // 1 to 7
   energy        Int // 1 to 7
   note          String?  @db.VarChar(280)
+
+  // Section 7.2 question 5, "Is this where you usually do focused work?".
+  // Not present in the Section 4 schema, which cannot store what Section 7.2
+  // mandates collecting. Nullable so an ordinary session, which is never asked
+  // this, is not forced to invent an answer.
+  usualWorkspace Boolean?
+
+  // Minutes already spent in the space when the report was given (Section 7.2
+  // question 4). `durationMin` above is the length of the session itself, which
+  // is a different quantity.
+  minutesInSpace Int?
+
+  @@index([userId])
+  @@index([snapshotId])
 }
