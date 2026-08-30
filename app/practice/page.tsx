@@ -1,4 +1,3 @@
-import Link from "next/link";
 import PracticeRoom from "@/components/PracticeRoom";
 import { FACTORS, type FactorKey } from "@/lib/scoring/weights";
 
@@ -21,13 +20,8 @@ export default function PracticePage({
       : null;
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-6 py-12">
-      <Link href="/" className="text-xs uppercase tracking-[0.2em] text-muted hover:text-ink">
-        Room to Mind
-      </Link>
-      <div className="mt-10">
-        <PracticeRoom suggestedFor={suggestedFor} />
-      </div>
+    <main className="mx-auto min-h-screen max-w-5xl px-6 py-10 lg:py-14">
+      <PracticeRoom suggestedFor={suggestedFor} />
     </main>
   );
 }

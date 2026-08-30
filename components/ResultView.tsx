@@ -109,6 +109,7 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
 
       {/* The score, and one click to its arithmetic. */}
       <section className="space-y-5">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-12">
         <ScoreDial
           value={result.eli}
           label={eliBand(result.eli)}
@@ -123,6 +124,7 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
           screenBox={snapshot.vision.screenBox}
           screenLightAlignment={snapshot.vision.screenLightAlignment}
         />
+        </div>
 
         <button
           onClick={() => setShowWeights((s) => !s)}
@@ -195,6 +197,7 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
       <section className="space-y-4">
         <h2 className="text-sm font-medium">What made up the score</h2>
 
+        <div className="grid gap-8 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start lg:gap-12">
         <div className="flex justify-center py-2">
           <FactorRadar subscores={subscores} />
         </div>
@@ -244,6 +247,7 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
             );
           })}
         </ul>
+        </div>
 
         {CALIBRATION_DATE === null && (
           <p className="max-w-reading text-xs leading-relaxed text-muted">

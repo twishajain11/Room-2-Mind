@@ -8,8 +8,7 @@ export const metadata = {
 
 export default function CalibratePage() {
   return (
-    <main className="mx-auto min-h-screen max-w-reading px-5 py-10">
-      <p className="text-xs uppercase tracking-[0.2em] text-muted">Room to Mind</p>
+    <main className="mx-auto min-h-screen max-w-4xl px-6 py-10 lg:py-14">
       <CalibrateFlow />
     </main>
   );
