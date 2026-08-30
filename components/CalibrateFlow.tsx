@@ -192,41 +192,91 @@ export default function CalibrateFlow() {
       )}
 
       {stage === "intro" && (
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <h1 className="text-2xl font-medium">Help calibrate Room to Mind</h1>
-            <p className="text-sm leading-relaxed text-muted">
-              Take one picture of the space you are sitting in and answer five quick questions. It
-              takes about a minute, and it is what teaches this tool what a room actually costs
-              someone&rsquo;s attention.
-            </p>
-            <p className="text-sm leading-relaxed text-muted">
-              The picture is read inside your browser and then discarded. It is never uploaded and
-              never stored. What gets sent is a short list of numbers, like how bright the room is
-              and how many objects were counted.
+        <div className="space-y-10">
+          <div className="space-y-4">
+            <h1 className="display text-3xl leading-tight sm:text-4xl">
+              Help calibrate Room to Mind
+            </h1>
+            <p className="max-w-reading text-base leading-relaxed text-ink-soft">
+              One picture of the space you are sitting in, then five quick questions. About a
+              minute. It is what teaches this tool what a room actually costs someone&rsquo;s
+              attention.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={startCamera}
-              className="rounded-md bg-accent px-5 py-3 text-sm font-medium text-paper"
-            >
-              Take a picture
-            </button>
-            <label className="cursor-pointer rounded-md border border-rule px-5 py-3 text-sm font-medium">
-              Choose a photo
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) onFile(f);
-                  e.target.value = "";
-                }}
-              />
-            </label>
+          {/* What happens to the photograph, as three steps rather than a promise. */}
+          <div className="grid gap-px overflow-hidden rounded-md border border-rule bg-rule sm:grid-cols-3">
+            {[
+              {
+                n: "1",
+                h: "The picture stays here",
+                p: "It is read inside your browser. It is never uploaded and never stored anywhere.",
+              },
+              {
+                n: "2",
+                h: "Only numbers leave",
+                p: "How bright the room is, how many objects were counted, how spread out they are.",
+              },
+              {
+                n: "3",
+                h: "Then it is gone",
+                p: "The picture is discarded the moment the numbers exist. Nobody ever sees it, including me.",
+              },
+            ].map((step) => (
+              <div key={step.n} className="space-y-2 bg-card p-5">
+                <p className="numeric text-xs text-muted">{step.n}</p>
+                <p className="text-sm font-medium">{step.h}</p>
+                <p className="text-xs leading-relaxed text-muted">{step.p}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={startCamera}
+                className="rounded-md bg-accent px-6 py-3 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90"
+              >
+                Take a picture
+              </button>
+              <label className="cursor-pointer rounded-md border border-rule px-6 py-3 text-sm font-medium transition-colors hover:border-ink">
+                Choose a photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) onFile(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            <p className="text-xs text-muted">
+              No account, no email, no name. Nothing here identifies you.
+            </p>
+          </div>
+
+          {/* Knowing what is coming makes people finish. */}
+          <div className="space-y-3 border-t border-rule pt-6">
+            <h2 className="text-xs uppercase tracking-[0.18em] text-muted">
+              The five questions, in advance
+            </h2>
+            <ol className="grid gap-x-8 gap-y-2 text-sm text-ink-soft sm:grid-cols-2">
+              {[
+                "How easily can you concentrate here right now?",
+                "How tense or stressed do you feel here right now?",
+                "How alert or energetic do you feel right now?",
+                "How long have you been in this space today?",
+                "Is this where you usually do focused work?",
+              ].map((q, i) => (
+                <li key={q} className="flex gap-3">
+                  <span className="numeric shrink-0 text-muted">{i + 1}</span>
+                  <span>{q}</span>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       )}
@@ -348,7 +398,7 @@ export default function CalibrateFlow() {
 
       {stage === "thanks" && (
         <div className="space-y-4">
-          <h1 className="text-2xl font-medium">Thank you</h1>
+          <h1 className="display text-3xl">Thank you</h1>
           <p className="text-sm leading-relaxed text-muted">
             Your answers are in, and your photograph is not: it was read and discarded before
             anything was sent.
