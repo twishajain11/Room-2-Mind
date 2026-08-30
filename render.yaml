@@ -23,6 +23,11 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.11.1
+      # Cap the heap below the free tier's 512MB so Node garbage-collects under
+      # pressure instead of being killed outright. A heap cap produces a real
+      # error message; an OOM kill produces silence.
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=420
       - key: DATABASE_URL
         fromDatabase:
           name: room-to-mind-db
