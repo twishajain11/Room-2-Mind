@@ -83,11 +83,6 @@ export default function PracticeRoom({ suggestedFor }: { suggestedFor: FactorKey
     }, 1000);
   }, [selected]);
 
-  const toggleTheme = () => {
-    const next: Theme = theme === "recovery" ? "default" : "recovery";
-    setTheme(next);
-    applyTheme(next);
-  };
 
   const total = selected ? selected.minutes * 60 : 0;
   const remaining = Math.max(0, total - elapsed);
@@ -118,24 +113,31 @@ export default function PracticeRoom({ suggestedFor }: { suggestedFor: FactorKey
   const cue = phase === "inhale" ? "Breathe in" : phase === "hold" ? "Rest" : "Breathe out";
   const phaseSeconds = breath?.length;
 
-  const animate = running && !stillMotion && theme !== "recovery" && !!selected?.pace;
+  // Whether the orb is allowed to move. Recovery and reduced-motion get a still
+  // orb and lean on the words, which is the right default for this audience.
+  const breathAnimates = running && !stillMotion && theme !== "recovery";
+
+  // Target size of the orb for the current phase. Full on the in-breath, held
+  // full through any pause, small on the out-breath. When still, it rests at a
+  // middle size so the ring never looks empty.
+  const orbScale = !running
+    ? 0.75
+    : phase === "inhale"
+      ? 1
+      : phase === "exhale"
+        ? 0.5
+        : 1; // hold, after a full in-breath
 
   return (
     <div className="space-y-10">
       <header className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted">A few minutes</p>
-            <h1 className="display text-3xl leading-tight">
-              When the room cannot change, and you still have to work in it
-            </h1>
-          </div>
-          <button
-            onClick={toggleTheme}
-            className="shrink-0 rounded-full border border-rule px-4 py-2 text-xs transition-colors hover:border-ink"
-          >
-            {theme === "recovery" ? "Normal light" : "Dim the page"}
-          </button>
+        {/* The dim control now lives in the shared site header, so this page no
+            longer carries its own copy. */}
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted">A few minutes</p>
+          <h1 className="display text-3xl leading-tight">
+            When the room cannot change, and you still have to work in it
+          </h1>
         </div>
 
         <p className="max-w-reading text-sm leading-relaxed text-muted">
@@ -193,34 +195,77 @@ export default function PracticeRoom({ suggestedFor }: { suggestedFor: FactorKey
             </button>
           </div>
 
-          {/* The timer, and the pacer when there is one. */}
+          {/* The visual guide: a breathing orb inside a session-progress ring. */}
           <div className="flex flex-col items-center gap-6 rounded-md border border-rule bg-card p-8">
-            {selected.pace ? (
-              <div className="relative flex h-44 w-44 items-center justify-center">
-                <div
-                  className="breathe-visual absolute inset-0 rounded-full bg-accent-soft"
-                  style={
-                    animate && phaseSeconds
-                      ? {
-                          animation: `breathe-scale ${phaseSeconds}s ease-in-out forwards`,
-                          animationDirection: phase === "exhale" ? "reverse" : "normal",
-                          transform: phase === "exhale" ? "scale(1)" : "scale(0.5)",
-                        }
-                      : { transform: "scale(0.85)" }
-                  }
-                  aria-hidden
+            <div className="relative flex h-52 w-52 items-center justify-center">
+              {/* Session progress, drawn once around everything. */}
+              <svg
+                className="absolute inset-0 -rotate-90"
+                viewBox="0 0 100 100"
+                aria-hidden
+              >
+                <circle cx="50" cy="50" r="46" fill="none" stroke="var(--rule)" strokeWidth="2" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 46}
+                  strokeDashoffset={2 * Math.PI * 46 * (1 - (total ? elapsed / total : 0))}
+                  style={{ transition: "stroke-dashoffset 1s linear" }}
                 />
+              </svg>
+
+              {selected.pace ? (
+                <>
+                  {/* The breath: a filled orb that grows on the in-breath and
+                      shrinks on the out-breath, so the instruction is something
+                      you follow rather than read. When motion is reduced or the
+                      page is dimmed for recovery, the orb holds still and the
+                      words and count carry it instead. */}
+                  <div
+                    className="breathe-visual absolute h-36 w-36 rounded-full bg-accent-soft"
+                    style={{
+                      transform: `scale(${orbScale})`,
+                      transition:
+                        breathAnimates && phaseSeconds
+                          ? `transform ${phaseSeconds}s ease-in-out`
+                          : "none",
+                    }}
+                    aria-hidden
+                  />
+                  <div
+                    className="absolute h-36 w-36 rounded-full border border-accent/40"
+                    aria-hidden
+                  />
+                  <div className="relative text-center">
+                    <p className="display text-xl">{running ? cue : "Ready"}</p>
+                    {running && breath ? (
+                      <p className="numeric mt-1 text-2xl font-light text-muted">{breath.left}</p>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted">Press begin</p>
+                    )}
+                  </div>
+                </>
+              ) : (
                 <div className="relative text-center">
-                  <p className="text-sm font-medium">{running ? cue : "Ready"}</p>
-                  {running && breath ? (
-                    <p className="numeric text-xs text-muted">{breath.left}</p>
-                  ) : null}
+                  <p className="display text-xl">{running ? "Rest" : "Ready"}</p>
+                  <p className="numeric mt-1 text-xs text-muted">
+                    {running ? "let the timer run" : "press begin"}
+                  </p>
                 </div>
-              </div>
-            ) : (
-              <div className="flex h-44 w-44 items-center justify-center rounded-full bg-accent-soft">
-                <p className="text-sm">{running ? "Rest" : "Ready"}</p>
-              </div>
+              )}
+            </div>
+
+            {selected.pace && (
+              <p className="text-center text-xs text-muted">
+                {breathAnimates
+                  ? "Follow the circle: grow as you breathe in, settle as you breathe out."
+                  : "Follow the words and the count. The circle is held still to keep the page calm."}
+              </p>
             )}
 
             <p className="numeric text-4xl font-light" aria-live="off">
