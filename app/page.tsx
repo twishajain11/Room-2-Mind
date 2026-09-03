@@ -14,6 +14,7 @@ export default function Home() {
           rather than leaving half a laptop screen empty. */}
       <div className="grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:items-start lg:gap-16">
       <section className="space-y-7">
+        <p className="text-xs uppercase tracking-[0.22em] text-accent">Welcome to Room to Mind</p>
         <h1 className="display text-balance text-4xl leading-[1.15] sm:text-5xl">
           Your environment loads your attention every second you are in it.
         </h1>
