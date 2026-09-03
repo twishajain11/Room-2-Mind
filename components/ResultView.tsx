@@ -28,6 +28,7 @@ import LoopCloser from "./LoopCloser";
 import ScoreDial from "./ScoreDial";
 import RoomDiagram from "./RoomDiagram";
 import FactorRadar from "./FactorRadar";
+import SoundReading from "./SoundReading";
 import SimulationPanel, { type ConcentrationModel } from "./SimulationPanel";
 import WeightsPanel from "./WeightsPanel";
 
@@ -267,35 +268,7 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
       {/* The acoustic channel. */}
       <section className="space-y-3">
         <h2 className="text-sm font-medium">Sound</h2>
-        {snapshot.audio ? (
-          <div className="space-y-3">
-            <p className="max-w-reading text-xs leading-relaxed text-muted">
-              This reports what the sound was made of, not how loud it was. A steady fan and an
-              intermittent conversation can hit the same decibel meter and load attention entirely
-              differently.
-            </p>
-            <dl className="numeric divide-y divide-rule border-y border-rule text-sm">
-              {[
-                ["Loudness, mean", snapshot.audio.rmsMean.toFixed(4)],
-                ["Intermittency, variance of loudness", snapshot.audio.rmsVariance.toFixed(5)],
-                ["Brightness, mean spectral centroid", `${snapshot.audio.spectralCentroidMean.toFixed(0)} Hz`],
-                ["Energy in the speech band, 300 to 3400 Hz", `${(snapshot.audio.speechBandRatio * 100).toFixed(1)}%`],
-                ["Energy below 250 Hz, traffic and machinery", `${(snapshot.audio.lowFreqRatio * 100).toFixed(1)}%`],
-                ["Frames sampled", String(snapshot.audio.frameCount)],
-              ].map(([label, value]) => (
-                <div key={label} className="flex items-baseline justify-between gap-4 py-2">
-                  <dt className="font-sans">{label}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        ) : (
-          <p className="max-w-reading text-sm text-muted">
-            No sound sample was taken, so acoustic load was left out of the score entirely rather
-            than guessed at.
-          </p>
-        )}
+        <SoundReading audio={snapshot.audio} />
       </section>
 
       {/* Interventions. */}
