@@ -66,9 +66,15 @@ export default function SiteHeader() {
         <button
           onClick={toggle}
           aria-pressed={theme === "recovery"}
-          className="order-2 ml-auto rounded-full border border-rule px-4 py-1.5 text-xs transition-colors hover:border-ink sm:order-3"
+          title="Reweights the score toward light and noise sensitivity and dims the interface. Built for post-concussion recovery."
+          className={
+            "order-2 ml-auto rounded-full border px-4 py-1.5 text-xs transition-colors sm:order-3 " +
+            (theme === "recovery"
+              ? "border-accent bg-accent text-accent-ink"
+              : "border-rule hover:border-ink")
+          }
         >
-          {theme === "recovery" ? "Normal light" : "Dim the page"}
+          {theme === "recovery" ? "Recovery Mode: on" : "Recovery Mode"}
         </button>
       </div>
     </header>

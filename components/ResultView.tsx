@@ -21,7 +21,7 @@ import type { SnapshotPayload } from "@/lib/snapshotStore";
 import { storedPayload } from "@/lib/snapshotStore";
 import { DETECTION_CONFIDENCE_THRESHOLD } from "@/lib/vision/objects";
 import { savePending } from "@/lib/loopStore";
-import { applyTheme } from "@/lib/theme";
+import { applyTheme, readTheme } from "@/lib/theme";
 import { priorLabel } from "@/lib/personalization/priors";
 import FeatureTable from "./FeatureTable";
 import LoopCloser from "./LoopCloser";
@@ -94,8 +94,15 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
     applyTheme(next === "recovery" ? "recovery" : "default");
   };
 
-  // Leaving the page should not leave the palette behind.
-  useEffect(() => () => applyTheme("default"), []);
+  // Recovery Mode is a global, persisted choice (the site header sets it too),
+  // so a result opened while it is on should score in Recovery Mode from the
+  // start, and leaving the page must not silently switch it back off.
+  useEffect(() => {
+    if (readTheme() === "recovery") {
+      setMode("recovery");
+      setWeights(WEIGHTS_BY_MODE.recovery);
+    }
+  }, []);
 
   return (
     <div className="space-y-14">

@@ -1,11 +1,19 @@
 import Link from "next/link";
 import WelcomeOverlay from "@/components/WelcomeOverlay";
-import { FACTORS, FACTOR_LABELS, FACTOR_MEANING, STANDARD_WEIGHTS } from "@/lib/scoring/weights";
+import CalibrationCount from "@/components/CalibrationCount";
+import {
+  FACTORS,
+  FACTOR_LABELS,
+  FACTOR_MEANING,
+  RECOVERY_WEIGHTS,
+  STANDARD_WEIGHTS,
+} from "@/lib/scoring/weights";
 
 const DOES_NOT_CLAIM = [
   "It does not claim clutter causes anxiety, or any causal claim about environment and mental health.",
   "It does not diagnose anything.",
   "It does not claim its priors are personalized until that user has logged enough sessions.",
+  "It does not replace clinical care. Anyone with persistent post-concussion symptoms should see a clinician.",
 ];
 
 export default function Home() {
@@ -92,6 +100,60 @@ export default function Home() {
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* Calibration progress: honest, live, and a nudge to contribute. */}
+      <section className="mt-12">
+        <CalibrationCount />
+      </section>
+
+      {/* Recovery Mode, made visible. This is the concussion-track fit, and it
+          was previously reachable only through a header toggle. */}
+      <section className="mt-20 space-y-5">
+        <h2 className="text-xs uppercase tracking-[0.18em] text-muted">Recovery Mode</h2>
+        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:gap-12">
+          <div className="max-w-reading space-y-4">
+            <p className="text-base leading-relaxed text-ink-soft">
+              Light sensitivity and noise sensitivity are cardinal symptoms after a concussion, and
+              the environment is one of the few things a recovering person can still control.
+              Recovery Mode reweights the score toward lighting and acoustic load, raises screen
+              positioning, and drops clutter down the list — because a dim, quiet room is the right
+              answer even when it is untidy. The interface dims with it, to a warm palette with the
+              blue taken out.
+            </p>
+            <p className="text-sm leading-relaxed text-muted">
+              This is a design choice informed by environmental-modification guidance. It is not a
+              medical device, it does not diagnose, and it does not replace clinical care. You can
+              turn it on from &ldquo;Recovery Mode&rdquo; in the header, on any page.
+            </p>
+          </div>
+
+          {/* The reweighting, shown as the actual numbers. */}
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.16em] text-muted">
+              How the weights change
+            </p>
+            <ul className="divide-y divide-rule border-y border-rule text-sm">
+              {FACTORS.map((factor) => {
+                const from = STANDARD_WEIGHTS[factor];
+                const to = RECOVERY_WEIGHTS[factor];
+                const up = to > from;
+                const down = to < from;
+                return (
+                  <li key={factor} className="flex items-baseline justify-between gap-4 py-2">
+                    <span>{FACTOR_LABELS[factor]}</span>
+                    <span className="numeric text-muted">
+                      {from.toFixed(2)} →{" "}
+                      <span className={up ? "text-accent" : down ? "text-ink" : "text-muted"}>
+                        {to.toFixed(2)}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section className="mt-16 space-y-4 rounded-md border border-rule bg-card p-6 lg:p-8">
