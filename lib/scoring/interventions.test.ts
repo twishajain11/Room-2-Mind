@@ -91,6 +91,21 @@ describe("intervention copy", () => {
     }
   });
 
+  it("does not tell you to clear objects when there are none", () => {
+    // Regression: a real snapshot showed "0 loose objects" beside "clear the
+    // loose objects". With no objects, the load is visual busyness, and the
+    // copy must say so instead of contradicting the count next to it.
+    const busyNoObjects = rankInterventions(
+      subs(),
+      STANDARD_WEIGHTS,
+      makeVisionFeatures({ clutterObjectCount: 0, edgeDensity: 0.216 })
+    ).find((r) => r.factor === "visualClutter")!;
+    expect(busyNoObjects.action.toLowerCase()).not.toContain("loose object");
+    expect(busyNoObjects.action.toLowerCase()).toContain("busyness");
+    expect(busyNoObjects.evidence).toContain("0.216");
+    expect(busyNoObjects.evidence.toLowerCase()).not.toContain("0 loose object");
+  });
+
   it("makes the singular case read correctly", () => {
     const one = rankInterventions(
       subs(),

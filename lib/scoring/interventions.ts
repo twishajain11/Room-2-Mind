@@ -71,6 +71,20 @@ function copyFor(
 ): { action: string; evidence: string } {
   switch (factor) {
     case "visualClutter":
+      // Visual clutter has two sources: loose objects, and sheer visual
+      // busyness (fine detail and pattern, measured by edge density). When no
+      // objects were detected, the load is coming from busyness, so telling the
+      // reader to "clear objects" that are not there would contradict the very
+      // number beside it. Address whichever source actually drove the score.
+      if (v.clutterObjectCount === 0) {
+        return {
+          action:
+            "Reduce the visual busyness behind and around your screen: a plainer backdrop, fewer competing patterns and textures in the field of view.",
+          evidence: `No loose objects were detected, so this is visual busyness rather than clutter. The field scores high on fine detail, at an edge density of ${v.edgeDensity.toFixed(
+            3
+          )}, where a plain wall sits near 0.05.`,
+        };
+      }
       return {
         action:
           "Clear the loose objects from the surface within arm's reach, and put the ones you have not touched today out of the frame entirely.",
