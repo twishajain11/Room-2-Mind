@@ -1,4 +1,5 @@
 import Link from "next/link";
+import WelcomeOverlay from "@/components/WelcomeOverlay";
 import { FACTORS, FACTOR_LABELS, FACTOR_MEANING, STANDARD_WEIGHTS } from "@/lib/scoring/weights";
 
 const DOES_NOT_CLAIM = [
@@ -10,11 +11,12 @@ const DOES_NOT_CLAIM = [
 export default function Home() {
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-6 py-14 lg:py-20">
+      <WelcomeOverlay />
       {/* Hero and the two channels sit side by side once there is room for them,
           rather than leaving half a laptop screen empty. */}
       <div className="grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:items-start lg:gap-16">
       <section className="space-y-7">
-        <p className="text-xs uppercase tracking-[0.22em] text-accent">Welcome to Room to Mind</p>
+        <p className="text-xs uppercase tracking-[0.22em] text-muted">Room to Mind</p>
         <h1 className="display text-balance text-4xl leading-[1.15] sm:text-5xl">
           Your environment loads your attention every second you are in it.
         </h1>
