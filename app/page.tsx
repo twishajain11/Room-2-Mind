@@ -123,8 +123,10 @@ export default function Home() {
             </p>
             <p className="text-sm leading-relaxed text-muted">
               This is a design choice informed by environmental-modification guidance. It is not a
-              medical device, it does not diagnose, and it does not replace clinical care. You can
-              turn it on from &ldquo;Recovery Mode&rdquo; in the header, on any page.
+              medical device, it does not diagnose, and it does not replace clinical care. Switch
+              any result between Standard and Recovery to see how the weighting changes the score.
+              For visual comfort, the Comfort Palette in the header separately dims the whole
+              interface to a warm, low-blue tone.
             </p>
           </div>
 

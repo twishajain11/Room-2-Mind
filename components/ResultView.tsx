@@ -21,7 +21,6 @@ import type { SnapshotPayload } from "@/lib/snapshotStore";
 import { storedPayload } from "@/lib/snapshotStore";
 import { DETECTION_CONFIDENCE_THRESHOLD } from "@/lib/vision/objects";
 import { savePending } from "@/lib/loopStore";
-import { applyTheme, readTheme } from "@/lib/theme";
 import { priorLabel } from "@/lib/personalization/priors";
 import FeatureTable from "./FeatureTable";
 import LoopCloser from "./LoopCloser";
@@ -86,23 +85,15 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
     [subscores, weights, snapshot]
   );
 
+  // The scoring mode and the visual palette are deliberately independent. This
+  // switch recomputes the score with recovery weights and nothing more; it does
+  // not touch the page's lighting. Dimming is its own control, the Comfort
+  // Palette in the header, because someone may want the recovery score without
+  // dimming the room they are looking at, or the reverse.
   const switchMode = (next: ScoringMode) => {
     setMode(next);
     setWeights(WEIGHTS_BY_MODE[next]);
-    // A mode that reweights toward light sensitivity should not keep shining a
-    // white page at the person who turned it on.
-    applyTheme(next === "recovery" ? "recovery" : "default");
   };
-
-  // Recovery Mode is a global, persisted choice (the site header sets it too),
-  // so a result opened while it is on should score in Recovery Mode from the
-  // start, and leaving the page must not silently switch it back off.
-  useEffect(() => {
-    if (readTheme() === "recovery") {
-      setMode("recovery");
-      setWeights(WEIGHTS_BY_MODE.recovery);
-    }
-  }, []);
 
   return (
     <div className="space-y-14">

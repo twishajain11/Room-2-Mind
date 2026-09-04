@@ -66,7 +66,7 @@ export default function SiteHeader() {
         <button
           onClick={toggle}
           aria-pressed={theme === "recovery"}
-          title="Reweights the score toward light and noise sensitivity and dims the interface. Built for post-concussion recovery."
+          title="Dims the whole interface to a warm, low-blue palette. Gentler on light sensitivity; changes only how the page looks, not the score."
           className={
             "order-2 ml-auto rounded-full border px-4 py-1.5 text-xs transition-colors sm:order-3 " +
             (theme === "recovery"
@@ -74,7 +74,7 @@ export default function SiteHeader() {
               : "border-rule hover:border-ink")
           }
         >
-          {theme === "recovery" ? "Recovery Mode: on" : "Recovery Mode"}
+          {theme === "recovery" ? "Comfort Palette: on" : "Comfort Palette"}
         </button>
       </div>
     </header>
