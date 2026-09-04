@@ -1,153 +1,126 @@
-# Room to Mind — Product & Technical Reference
+# Room to Mind — Complete Project Briefing
 
-**A source-of-truth description of what this app is, how it works, and what it does and does not claim.**
-Written from the actual codebase, not the spec's aspirations. Where the two differ, this document describes what is really built and running as of the last commit. Use it to write your Devpost, script your video, and answer a judge — everything here is true.
+**Everything about this app: what it is, how it works, how it was built, and the honest state of it.**
+Written from the actual codebase. Every claim here is true as of the last commit — feed this to a writing assistant to draft a Devpost body and it will have facts, not guesses.
 
 Live: https://room-to-mind.onrender.com · Repo: https://github.com/twishajain11/Room-2-Mind
 
 ---
 
-## 1. What it is, in three sentences
+## 1. The one-line version
 
-Room to Mind measures how much your physical environment is loading your attention, from a single photo of the space plus an optional 20-second sound sample. It reduces the room to a transparent 0–100 **Environmental Load Index (ELI)**, shows you the exact arithmetic behind that number, and ranks the single highest-impact change you could make. Every measurement happens inside your browser — the photo and audio are read and then discarded, and only numbers are ever stored.
+Room to Mind measures how much your physical environment is loading your attention — from a single photo and an optional 20 seconds of sound, entirely in your browser — and turns your room into a transparent, adjustable 0–100 score you can actually argue with.
 
----
+## 2. The problem it addresses
 
-## 2. The core idea
+Your environment is the one input to cognition that nobody measures. Light, clutter, colour, the layout of work versus rest, and above all the *kind* of sound around you tax attention continuously. We track steps, sleep, and heart rate, but the room you are trying to think in is invisible to all of it. Room to Mind is an instrument for it — built to be transparent (every number shows its reasoning) and honest (it never claims more than it has measured).
 
-Your environment is the one input to cognition that nobody measures. Light, clutter, colour, the layout of work versus rest, and above all the *kind* of sound around you all tax attention continuously, but there is no instrument for it the way there is for steps or heart rate. Room to Mind is that instrument — deliberately transparent, so every number can be questioned, and deliberately honest, so it never claims more than it has measured.
+The concussion-recovery angle sharpens the whole thing: light sensitivity (photophobia) and noise sensitivity (phonophobia) are cardinal post-concussion symptoms, and modifying the environment is standard recovery guidance. A tool that reads a room for exactly those things has a clear clinical-domain use, which is why the app has a dedicated Recovery Mode.
 
----
+## 3. What a person does, end to end
 
-## 3. What a person actually does
+1. **Arrives** at a one-time welcome screen (fades in, dismissible, shown once per browser).
+2. **Takes or uploads a photo** of the space. It is shrunk to 512px, read for features, and discarded.
+3. **Optionally records 20 seconds of sound.** The mic is sampled 10×/second and reduced to five numbers as it goes. Nothing is recorded.
+4. **Sees a result page:** the score as a dial; a diagram of the room rebuilt from the numbers; a six-factor breakdown as a radar; a plain-language reading of the sound; and up to three ranked, physical changes to make.
+5. **Opens the arithmetic** — every factor weight is a live slider that recomputes the score.
+6. **Can switch the score between Standard and Recovery** weighting to see how much the room costs someone recovering from a concussion.
+7. **Can step into Antara** — a set of short breathing and rest practices — when the room can't be changed right now.
+8. **Can dim the whole interface** with the Comfort Palette, independently of everything else.
+9. **Separately, can help calibrate the tool** at `/calibrate`: one photo, five questions, about a minute.
 
-1. **Opens the app** and is greeted by a one-time welcome screen.
-2. **Takes or uploads a photo** of the space they are in. The frame is shrunk to 512px, read for features, and dropped.
-3. **Optionally adds 20 seconds of sound.** The microphone is sampled ten times a second and reduced to five numbers as it goes; nothing is recorded.
-4. **Gets a result page**: the ELI score as a dial, a diagram of the room rebuilt from the numbers, a six-factor breakdown, a plain-language reading of the sound, and up to three ranked, physical interventions.
-5. **Can open the arithmetic** — every weight is a live slider that recomputes the score.
-6. **Can switch to Recovery Mode**, which reweights the score toward light and noise sensitivity and dims the whole interface.
-7. **Can step into the Practice Room** when the room can't be changed right now — six short breathing/rest practices with a visual guide.
-8. **Separately, can help calibrate the tool** at `/calibrate` — one photo, five questions — which is how the app learns what a room really costs.
+## 4. Features, as actually built
 
----
+| Feature | What it does |
+|---|---|
+| **Snapshot capture** | Camera or file, downscaled to 512px, read entirely in-browser |
+| **Classical CV features** | Luminance, contrast, bright-region location, edge density (Sobel), palette entropy (k-means), saturation, warmth — all hand-written Canvas 2D, each explainable in one sentence |
+| **Object features** | COCO-SSD (mobilenet_v2) in-browser; objects bucketed into work / screen / rest / clutter, with furniture and fixtures excluded from clutter |
+| **Acoustic channel** | 20s Web Audio spectral analysis: loudness, intermittency, speech-band and low-frequency energy, brightness |
+| **ELI composite** | Weighted mean of six factor subscores, 0–100, computed only over factors with evidence |
+| **Live weights panel** | Every weight is a slider; score and full arithmetic recompute instantly |
+| **Standard / Recovery scoring** | Reweights the score toward light and noise sensitivity; surfaces glare range and sound intermittency; shows a medical disclaimer |
+| **Comfort Palette** | Dims the whole interface to a warm, low-blue tone for light sensitivity — visual only, independent of the score |
+| **Ranked interventions** | Up to three specific physical changes, each quoting the measurement behind it |
+| **Room diagram** | The room redrawn from the stored numbers alone — object boxes, a glow at the light source, a line from screen to light — with no photo behind it |
+| **Factor radar + score dial** | Hand-drawn SVG summaries; unscored factors show as gaps, never zeros |
+| **Plain-language sound reading** | A relatable sentence about the sound, with the exact figures behind a toggle |
+| **Simulation panel** | Predicts concentration change from factor changes, with uncertainty bands (activates once the model is fitted) |
+| **Loop closer** | Recapture after a change; compares predicted vs actual score delta |
+| **Antara** | Short traditional practices (breathing + rest) with a visual breathing guide; measures and stores nothing |
+| **Calibration instrument** | One photo, five questions; the data-collection surface, with a live count |
+| **Welcome screen** | One-time first-arrival greeting |
 
-## 4. Features, as built
+## 5. How the score works
 
-| Feature | What it does | Route / file |
-|---|---|---|
-| **Snapshot capture** | Camera or file, downscaled to 512px, read entirely client-side | `/capture`, `lib/vision/capture.ts` |
-| **Classical CV features** | Luminance, contrast, bright-region location, edge density, palette entropy, saturation, warmth | `lib/vision/*.ts` |
-| **Object features (COCO-SSD)** | Detects objects in-browser, buckets them into work/screen/rest/clutter | `lib/vision/objects.ts`, `detector.ts` |
-| **Acoustic channel** | 20s spectral analysis: loudness, intermittency, speech-band and low-frequency energy | `lib/audio/*.ts` |
-| **ELI composite** | Weighted mean of six factor subscores, 0–100 | `lib/scoring/eli.ts` |
-| **Live weights panel** | Every weight is a slider; the score and arithmetic recompute instantly | `components/WeightsPanel.tsx` |
-| **Recovery Mode** | Reweights toward light/noise sensitivity + dims the whole UI to a warm, blue-free palette | `lib/scoring/weights.ts`, `lib/theme.ts` |
-| **Ranked interventions** | Up to three specific physical changes, each quoting the measurement behind it | `lib/scoring/interventions.ts` |
-| **Room diagram** | The room redrawn from the stored numbers alone — no photo behind it | `components/RoomDiagram.tsx` |
-| **Factor radar + score dial** | Visual summaries of the six subscores and the composite | `components/FactorRadar.tsx`, `ScoreDial.tsx` |
-| **Plain-language sound reading** | A relatable sentence about the sound, with exact figures behind a toggle | `lib/audio/plain.ts`, `components/SoundReading.tsx` |
-| **Simulation panel** | Predicts concentration change from factor changes, with uncertainty bands (active once a model is fitted) | `components/SimulationPanel.tsx` |
-| **Loop closer** | Recapture after a change; compares predicted vs actual ELI delta | `components/LoopCloser.tsx` |
-| **Practice Room** | Six gentle Indian yogic practices, timer + breathing guide, measures nothing | `/practice`, `lib/practices.ts` |
-| **Calibration instrument** | One photo, five questions; the data collection surface | `/calibrate` |
-| **Welcome screen** | One-time first-arrival greeting | `components/WelcomeOverlay.tsx` |
+Six factors and their default (Standard) weights:
 
----
-
-## 5. How the score is built
-
-### The six factors and their default weights
-
-| Factor | Weight | What a high score means |
+| Factor | Weight | High means |
 |---|---|---|
 | Visual clutter | 0.25 | Dense visual field competing for attention |
 | Acoustic load | 0.25 | Intermittent, speech-heavy sound |
-| Workspace separation | 0.20 | Work and rest occupy the same zone |
+| Workspace separation | 0.20 | Work and rest share one zone |
 | Lighting | 0.15 | Too dim, too harsh, or extreme contrast |
 | Screen positioning | 0.10 | Screen backlit or poorly placed relative to light |
 | Colour environment | 0.05 | Visually noisy or over-saturated palette |
 
-`ELI = Σ(weight × subscore) / Σ(weight)`, computed only over the factors that have evidence.
+`ELI = Σ(weight × subscore) / Σ(weight)` over the factors that have evidence.
 
-### The rule that makes it honest
+**The rule that makes it honest:** a factor with no evidence is dropped from the calculation entirely, never scored at a midpoint. No screen detected → screen positioning not scored. No sound sampled → acoustic load not scored. No furniture detected → workspace separation not scored. The result marks these "not scored" rather than inventing a number.
 
-**A factor with no evidence is dropped from the calculation entirely — never scored at a midpoint.** If no screen is detected, screen positioning is not scored. If no sound is sampled, acoustic load is not scored. If no furniture is detected, workspace separation is not scored. The result page marks these "not scored" rather than quietly inventing a number, and the score is computed only from what was actually measured.
+**Recovery weighting** raises lighting and acoustic load to 0.30 each and screen positioning to 0.20, and drops clutter, because a dim, quiet room is the right answer for someone recovering even when it is untidy.
 
-### Recovery Mode reweighting
+## 6. The privacy architecture (the strongest claim, and it is real)
 
-| Factor | Recovery weight |
-|---|---|
-| Lighting | 0.30 |
-| Acoustic load | 0.30 |
-| Screen positioning | 0.20 |
-| Visual clutter | 0.10 |
-| Workspace separation | 0.05 |
-| Colour environment | 0.05 |
+- Raw photos never leave the browser — captured to a canvas, read, then discarded.
+- Raw audio never leaves the browser — there is no `MediaRecorder` anywhere in the code; the mic is analysed live into five numbers.
+- The photo is never shown back to the user after extraction — a deliberate choice to make the discard visible.
+- Only numeric feature vectors are stored, and the server *enforces* it: a POST containing a string (e.g. a smuggled base64 image) inside the feature payload is rejected. Verified in production.
+- The database schema has no image column and no audio column.
+- No account, no email, no name — users are an anonymous handle.
 
-Light sensitivity and noise sensitivity are cardinal post-concussion symptoms, so Recovery Mode weights them highest and additionally dims the interface. **This is a design choice informed by environmental-modification guidance, stated as such — it is not a medical device and does not diagnose or treat anything.** The disclaimer renders whenever Recovery Mode is active.
-
----
-
-## 6. The privacy architecture (the strongest claim)
-
-This is the single most important design constraint, and it is real, not marketing:
-
-- **Raw photos never leave the browser.** Captured to a canvas, read for features, then the buffer is discarded.
-- **Raw audio never leaves the browser.** There is no `MediaRecorder` anywhere in the codebase; the microphone is analysed live and reduced to five numbers.
-- **The photo is never even shown back to you** after extraction — a deliberate choice to make the discard visible.
-- **Only numeric feature vectors are stored.** The server *enforces* this: any attempt to POST a string (e.g. a smuggled base64 image) inside the feature payload is rejected with an error. Verified in production.
-- **The database schema has no image column and no audio column.** That absence is deliberate.
-- **No account, no email, no name.** Users are an anonymous handle.
-
----
-
-## 7. What it does NOT claim (verbatim, and enforced in the UI)
+## 7. What it explicitly does NOT claim (shown in the UI)
 
 1. It does not claim clutter causes anxiety, or any causal claim about environment and mental health.
 2. It does not diagnose anything.
 3. It does not claim its priors are personalized until that user has logged enough sessions.
+4. It does not replace clinical care; anyone with persistent post-concussion symptoms should see a clinician.
 
-The framing throughout is **cognitive load and self-reported well-being**, and correlation discovered per user — never population-level causation.
+Framing throughout: cognitive load and self-reported well-being, correlation discovered per user, never population-level causation.
 
----
+## 8. The honest data state (important — do not inflate this)
 
-## 8. The honest state of the data (read this before writing anything)
+Calibration is live and ongoing. At the time of writing the dataset holds a small number of real responses (single digits, growing toward the low tens before submission). The app tells this truth: it shows a live count and never fakes one.
 
-**The calibration dataset currently holds 0 responses.** This is the truth and the app tells this truth: `SEED_SAMPLE_SIZE = 0`, and every surface that would show a learned insight reads that first and says what it actually has.
+- The population regression needs **30 responses to fit** — a deliberate statistical floor, since fitting six predictors on fewer would be too thin to trust. Below that, the app shows the count and a "not yet fitted" state.
+- Normalization breakpoints are still **provisional, hand-written values**, and the result page says so.
+- Intervention targets are **provisional stand-ins** for the seed dataset's 25th percentile, flagged as such.
 
-- The population regression is **not yet fitted** — it needs a minimum of 30 responses before it will show at all.
-- The normalization breakpoints are still **provisional, hand-written values**, and the result page says so in plain text.
-- The intervention targets are **provisional stand-ins** for the seed dataset's 25th percentile, flagged as such in the UI.
-
-Do **not** write "trained on 87 responses" or any specific number anywhere. That figure appears in the original spec as an example; it is not real. The whole credibility of the project rests on stating the true number, however small, and letting it grow as calibration responses come in. The collection is live and ongoing.
-
----
+Do not write a specific trained-on number unless it is the real current count. The spec contains an example figure ("87 responses") that is NOT real. Stating the true, small number and letting it grow is the whole credibility play.
 
 ## 9. Technical stack
 
 - **Framework:** Next.js 14 (App Router), TypeScript
-- **Styling:** Tailwind CSS, a two-palette design system (default + recovery) driven by CSS variables
-- **Vision:** `@tensorflow-models/coco-ssd` (mobilenet_v2 backbone) on `@tensorflow/tfjs`, plus hand-written Canvas 2D pixel operations — every feature explainable in one sentence
+- **Styling:** Tailwind, a two-palette design system (default + recovery) via CSS variables
+- **Vision:** `@tensorflow-models/coco-ssd` (mobilenet_v2) on `@tensorflow/tfjs`, plus hand-written Canvas 2D pixel ops
 - **Audio:** Web Audio `AnalyserNode` spectral analysis
-- **Personalization:** ridge regression, hand-implemented (no ML dependency), with per-coefficient standard errors for uncertainty bands
+- **Personalization:** ridge regression implemented by hand (no ML dependency), with per-coefficient standard errors for honest uncertainty bands
 - **Database:** PostgreSQL via Prisma (feature vectors only)
 - **Deploy:** Render (web service + free Postgres), Node runtime
-- **Tests:** 120 passing unit tests across 12 files (vision features, scoring, ELI composite, interventions, ridge regression, audio, plain-language reading)
+- **Tests:** 122 passing unit tests across 13 files (vision features, scoring, ELI, interventions, ridge regression, audio, plain-language reading)
 
-### Notable engineering decisions
+## 10. How it was built, and the decisions worth telling
 
-- **512px downscale is kept** — tested and proven not to hurt detection accuracy, while 10× faster than native-resolution inference.
-- **mobilenet_v2 over the lite backbone** — the lite model missed a laptop in a real room photo at 0.27 confidence (below the 0.4 threshold), silently blanking two factors; the full model reads it at 0.54.
-- **Build capped to one worker + a heap limit** so it fits Render's 512MB free-tier build memory.
-- **Warm capture is ~200ms;** the first capture downloads the object model (~30s), preloaded in the background while the user reads the page.
+- **Object detection nearly failed silently.** The lightweight COCO backbone saw a real laptop at 0.27 confidence — just under the 0.4 threshold — which quietly blanked two of the six factors at once (laptop feeds both the work-surface and screen buckets). Diagnosed by building a side-by-side harness comparing backbones and resolutions; the full mobilenet_v2 reads the same laptop at 0.54. Also proved the 512px downscale the spec mandates does *not* hurt detection, while being 10× faster than native.
+- **Honest scoring changed the product.** Early on, a factor with no evidence was scored at a neutral 50, so a room with no detected furniture contributed half its score from nothing. Rebuilding it to drop unmeasured factors entirely was the decision that made the whole tool trustworthy.
+- **Two real bugs, both found by looking at real output and both fixed with regression tests:** furniture (chairs, plants, fixtures) was being counted as clutter and the app told the user to clear their chairs; and the sound "brightness" reading was being dragged toward zero by silent frames until it was changed to a loudness-weighted average.
+- **Deployment on a 512MB free tier** kept dying silently because Next.js parallel compilation loads TensorFlow into every worker; capped to one worker with a heap limit to make it fit.
+- **Two distinct comfort ideas were separated late:** the Comfort Palette (visual dimming) and Recovery scoring (reweighting) were unified, then deliberately decoupled so a user can take either without the other.
+
+## 11. One-paragraph pitch (Devpost intro seed)
+
+Your environment loads your attention every second you are in it, and it is the one input to cognition nobody measures. Room to Mind measures it — from a single photo and 20 seconds of sound, entirely in your browser — and turns your room into a transparent 0–100 load score you can actually argue with: every weight is a slider, every number shows its arithmetic, and every recommendation quotes the measurement behind it. It never keeps your photo, never claims more than it has measured, and includes a Recovery Mode built for the light and noise sensitivity that follows a concussion, plus Antara, a quiet set of breathing practices for when the room can't change. It is an honest instrument for the most-overlooked influence on how well you think.
 
 ---
 
-## 10. One-paragraph pitch (for Devpost intro)
-
-Your environment loads your attention every second you are in it, and it is the one input to cognition nobody measures. Room to Mind measures it — from a single photo and 20 seconds of sound, entirely in your browser — and turns your room into a transparent 0–100 load score you can actually argue with: every weight is a slider, every number shows its arithmetic, and every recommendation quotes the measurement behind it. It never keeps your photo, never claims more than it has measured, and includes a Recovery Mode built for the light and noise sensitivity that follows a concussion. It is an honest instrument for the most-overlooked influence on how well you think.
-
----
-
-*This document reflects the codebase as built. If you change a feature, update this file so it stays true.*
+*Reflects the codebase as built. Update this file when a feature changes so it stays true.*
