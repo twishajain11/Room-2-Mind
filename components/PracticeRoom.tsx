@@ -134,10 +134,10 @@ export default function PracticeRoom({ suggestedFor }: { suggestedFor: FactorKey
         {/* The dim control now lives in the shared site header, so this page no
             longer carries its own copy. */}
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted">A few minutes</p>
-          <h1 className="display text-3xl leading-tight">
-            When the room cannot change, and you still have to work in it
-          </h1>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted">
+            Antara · the pause between breaths
+          </p>
+          <h1 className="display text-3xl leading-tight">A pause, when the room can&rsquo;t change</h1>
         </div>
 
         <p className="max-w-reading text-sm leading-relaxed text-muted">

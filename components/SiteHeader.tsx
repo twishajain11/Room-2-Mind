@@ -15,7 +15,7 @@ import { applyTheme, readTheme, type Theme } from "@/lib/theme";
  */
 const NAV = [
   { href: "/capture", label: "Measure" },
-  { href: "/practice", label: "Practice" },
+  { href: "/practice", label: "Antara" },
   { href: "/calibrate", label: "Calibrate" },
 ];
 

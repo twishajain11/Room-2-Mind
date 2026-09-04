@@ -45,7 +45,7 @@ export default function Home() {
             href="/practice"
             className="rounded-md border border-rule px-6 py-3 text-sm font-medium transition-colors hover:border-ink"
           >
-            Take a few minutes
+            Antara: take a pause
           </Link>
         </div>
 
@@ -178,7 +178,7 @@ export default function Home() {
           Help calibrate it
         </Link>
         <Link href="/practice" className="hover:text-ink">
-          Practice room
+          Antara
         </Link>
         <span>No account, no email, no image ever stored.</span>
       </footer>
