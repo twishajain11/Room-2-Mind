@@ -51,7 +51,7 @@ export function plainSound(a: AudioFeatures): PlainSound {
 
   if (isIntermittent) {
     parts.push(
-      "The sound in this room keeps changing — going quiet, then loud again. That on-and-off pattern is the kind that pulls your attention away, more than a sound that just stays the same."
+      "The sound in this room keeps changing, going quiet, then loud again. That on-and-off pattern is the kind that pulls your attention away, more than a sound that just stays the same."
     );
   } else {
     parts.push(

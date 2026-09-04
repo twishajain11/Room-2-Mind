@@ -117,7 +117,7 @@ export default function Home() {
               Light sensitivity and noise sensitivity are cardinal symptoms after a concussion, and
               the environment is one of the few things a recovering person can still control.
               Recovery Mode reweights the score toward lighting and acoustic load, raises screen
-              positioning, and drops clutter down the list — because a dim, quiet room is the right
+              positioning, and drops clutter down the list, because a dim, quiet room is the right
               answer even when it is untidy. The interface dims with it, to a warm palette with the
               blue taken out.
             </p>
@@ -161,9 +161,10 @@ export default function Home() {
         <ul className="space-y-3">
           {DOES_NOT_CLAIM.map((line) => (
             <li key={line} className="flex gap-3 text-sm leading-relaxed text-ink-soft">
-              <span aria-hidden className="select-none text-rule">
-                —
-              </span>
+              <span
+                aria-hidden
+                className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+              />
               <span>{line}</span>
             </li>
           ))}

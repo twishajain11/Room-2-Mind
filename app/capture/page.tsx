@@ -1,6 +1,6 @@
 import CaptureFlow from "@/components/CaptureFlow";
 
-export const metadata = { title: "Snapshot — Room to Mind" };
+export const metadata = { title: "Snapshot · Room to Mind" };
 
 export default function CapturePage() {
   return (

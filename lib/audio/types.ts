@@ -1,4 +1,4 @@
-/** Section 5.4 — the acoustic channel. */
+/** Section 5.4: the acoustic channel. */
 
 /**
  * One 100ms observation of the room.

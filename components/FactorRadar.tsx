@@ -120,7 +120,7 @@ export default function FactorRadar({ subscores }: { subscores: Subscores }) {
             fill={value === null ? "var(--muted)" : "var(--ink)"}
           >
             {FACTOR_LABELS[f].split(" ")[0]}
-            <tspan fill="var(--muted)"> {value === null ? "—" : Math.round(value)}</tspan>
+            <tspan fill="var(--muted)"> {value === null ? "n/s" : Math.round(value)}</tspan>
           </text>
         );
       })}

@@ -35,7 +35,7 @@ export interface Detection {
   bbox: [number, number, number, number];
 }
 
-/** Section 5.1 — classical CV features. */
+/** Section 5.1: classical CV features. */
 export interface LuminanceFeatures {
   meanLuminance: number;
   luminanceStdDev: number;
@@ -53,7 +53,7 @@ export interface PaletteFeatures {
   warmthRatio: number;
 }
 
-/** Section 5.2 — object features. */
+/** Section 5.2: object features. */
 export interface ObjectFeatures {
   objectCount: number;
   clutterObjectCount: number;
@@ -64,7 +64,7 @@ export interface ObjectFeatures {
   screenLightAlignment: number | null;
 }
 
-/** Section 5.3 — spatial organization. */
+/** Section 5.3: spatial organization. */
 export interface SpatialFeatures {
   bboxScatter: number;
   alignmentVariance: number;

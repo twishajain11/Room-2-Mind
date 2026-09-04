@@ -70,7 +70,7 @@ export default function WeightsPanel({
                       {term.weighted.toFixed(1)}
                     </>
                   ) : (
-                    `${weights[factor].toFixed(2)} × — `
+                    `${weights[factor].toFixed(2)} × not scored`
                   )}
                 </span>
               </div>
@@ -105,7 +105,7 @@ export default function WeightsPanel({
         <p>
           Sum of weights used: <span className="text-ink">{result.weightSum.toFixed(2)}</span>
           {result.skipped.length > 0 && (
-            <span> — {result.skipped.length} factor(s) excluded for lack of evidence</span>
+            <span>, {result.skipped.length} factor(s) excluded for lack of evidence</span>
           )}
         </p>
         <p>

@@ -227,7 +227,7 @@ export default function ResultView({ snapshot }: { snapshot: SnapshotPayload }) 
                         {subscore.toFixed(0)}
                         <span className="text-muted">
                           {" "}
-                          — {term ? term.contribution.toFixed(1) : "0.0"} of the{" "}
+                          · {term ? term.contribution.toFixed(1) : "0.0"} of the{" "}
                           {result.eli.toFixed(1)}
                         </span>
                       </>

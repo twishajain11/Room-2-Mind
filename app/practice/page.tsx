@@ -2,7 +2,7 @@ import PracticeRoom from "@/components/PracticeRoom";
 import { FACTORS, type FactorKey } from "@/lib/scoring/weights";
 
 export const metadata = {
-  title: "Practice — Room to Mind",
+  title: "Practice · Room to Mind",
   description:
     "Six short traditional practices for when the load is high and the room cannot be changed right now.",
 };

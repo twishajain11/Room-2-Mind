@@ -119,7 +119,7 @@ export default function LoopCloser({
 }
 
 function format(value: unknown): string {
-  if (value === null || value === undefined) return "—";
+  if (value === null || value === undefined) return "n/a";
   if (typeof value === "boolean") return value ? "yes" : "no";
   if (typeof value === "number") {
     return Number.isInteger(value) ? String(value) : value.toFixed(Math.abs(value) < 1 ? 3 : 1);

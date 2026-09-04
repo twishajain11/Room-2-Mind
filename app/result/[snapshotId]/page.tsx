@@ -1,6 +1,6 @@
 import ResultLoader from "@/components/ResultLoader";
 
-export const metadata = { title: "Result — Room to Mind" };
+export const metadata = { title: "Result · Room to Mind" };
 
 export default function ResultPage({ params }: { params: { snapshotId: string } }) {
   return (
