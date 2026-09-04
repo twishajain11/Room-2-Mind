@@ -29,6 +29,17 @@ describe("bucketing", () => {
     expect(isClutter("cup")).toBe(true);
   });
 
+  it("does not count room furniture or fixtures as clutter", () => {
+    // Regression: a real office photo flagged its chairs as loose objects and
+    // told the user to clear them. Furniture is the room, not clutter on it.
+    expect(isClutter("chair")).toBe(false);
+    expect(isClutter("potted plant")).toBe(false);
+    expect(isClutter("refrigerator")).toBe(false);
+    // Portable pile-up items are still clutter.
+    expect(isClutter("bottle")).toBe(true);
+    expect(isClutter("backpack")).toBe(true);
+  });
+
   it("drops detections below the confidence threshold", () => {
     const kept = aboveThreshold([det("cup", [0, 0, 10, 10], 0.39), det("book", [0, 0, 10, 10], 0.41)]);
     expect(kept.map((d) => d.class)).toEqual(["book"]);

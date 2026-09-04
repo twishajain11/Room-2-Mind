@@ -94,6 +94,15 @@ describe("summarizeFrames", () => {
     expect(intermittent.rmsVariance).toBeGreaterThan(steady.rmsVariance);
   });
 
+  it("weights brightness by loudness so silent gaps do not drag it down", () => {
+    // Two loud frames at 1000 Hz and two silent frames (centroid 0). A flat
+    // mean would report 500 Hz; the audible sound was 1000 Hz.
+    const loud = { rms: 0.5, centroid: 1000, speechRatio: 0.3, lowRatio: 0.2 };
+    const silent = { rms: 0, centroid: 0, speechRatio: 0, lowRatio: 0 };
+    const s = summarizeFrames([loud, silent, loud, silent]);
+    expect(s.spectralCentroidMean).toBeCloseTo(1000, 6);
+  });
+
   it("records how many frames it summarized", () => {
     expect(summarizeFrames([0.1, 0.2, 0.3].map(frame)).frameCount).toBe(3);
   });

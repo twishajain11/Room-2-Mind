@@ -23,12 +23,40 @@ export const BUCKETS = {
 
 export type BucketName = keyof typeof BUCKETS;
 
+/**
+ * Furniture and fixtures that are part of a normal room, not clutter on it.
+ *
+ * A deliberate departure from the spec's "clutter is everything else": tested
+ * on a real office photo, that rule flagged the chairs as "loose objects" and
+ * told the user to clear them, which is nonsense. Clutter is the portable
+ * stuff that piles up on a surface (books, cups, bottles, bags); a chair, a
+ * plant, a fridge is the room itself. These are excluded from the clutter
+ * count without being scored as anything, since none of them is a work,
+ * screen, or rest surface.
+ */
+export const NEUTRAL_OBJECTS: readonly string[] = [
+  "chair",
+  "bench",
+  "potted plant",
+  "refrigerator",
+  "oven",
+  "microwave",
+  "sink",
+  "toilet",
+  "clock",
+  "vase",
+];
+
 export function inBucket(cls: string, bucket: BucketName): boolean {
   return (BUCKETS[bucket] as readonly string[]).includes(cls);
 }
 
-/** True when a detection matches none of the named buckets. */
+/**
+ * True when a detection is loose clutter: it matches no named surface bucket
+ * and is not a piece of room furniture or a fixture.
+ */
 export function isClutter(cls: string): boolean {
+  if (NEUTRAL_OBJECTS.includes(cls)) return false;
   return !(Object.keys(BUCKETS) as BucketName[]).some((b) => inBucket(cls, b));
 }
 

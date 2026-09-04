@@ -92,10 +92,19 @@ export function summarizeFrames(frames: AudioFrame[]): AudioFeatures {
   const rms = frames.map((f) => f.rms);
   const rmsMean = mean(rms);
 
+  // Brightness is averaged weighted by loudness, not as a flat mean. A silent
+  // frame has a centroid of 0, and letting those zeros into a plain average
+  // drags the reported brightness far below what the audible sound actually
+  // was: a pulsing 900Hz tone with quiet gaps otherwise reports ~440Hz. The
+  // weighting lets the frames that carry sound decide the number.
+  const totalRms = rms.reduce((a, b) => a + b, 0);
+  const spectralCentroidMean =
+    totalRms > 0 ? frames.reduce((acc, f) => acc + f.rms * f.centroid, 0) / totalRms : 0;
+
   return {
     rmsMean,
     rmsVariance: frames.length === 0 ? 0 : mean(rms.map((v) => (v - rmsMean) * (v - rmsMean))),
-    spectralCentroidMean: mean(frames.map((f) => f.centroid)),
+    spectralCentroidMean,
     speechBandRatio: mean(frames.map((f) => f.speechRatio)),
     lowFreqRatio: mean(frames.map((f) => f.lowRatio)),
     frameCount: frames.length,
